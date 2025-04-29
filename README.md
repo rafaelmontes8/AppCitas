@@ -38,13 +38,13 @@ Sistema de gestión de citas online para una clínica de psicología, desarrolla
 
 1. Clonar el repositorio:
 ```bash
-git clone [URL_DEL_REPOSITORIO]
-cd [NOMBRE_DEL_DIRECTORIO]
+git clone https://github.com/rafaelmontes8/AppCitas.git
+cd AppCitas
 ```
 
 2. Iniciar los contenedores Docker:
 ```bash
-docker-compose up -d
+docker-compose up --build -d
 ```
 
 3. Acceder a la aplicación:
