@@ -62,14 +62,15 @@ git clone https://github.com/rafaelmontes8/AppCitas.git
 cd AppCitas
 ```
 
-2.Instalar Docker (Puede variar segun OS)
+2.Instalar Docker (Puede variar segun OS, en windows necesita tambien WSL).
+
 
 3. Iniciar los contenedores Docker:
 ```bash
 docker-compose up --build -d
 ```
 
-3. Acceder a la aplicación:
+4. Acceder a la aplicación:
 ```
 http://localhost:8080
 ```
