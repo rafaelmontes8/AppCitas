@@ -55,11 +55,7 @@ function findNextAvailableTime($connection) {
                 $next_time->setTime($start_hour, 0);
             }
             
-            $next_time_str = $next_time->format('Y-m-d H:i:s');
-            
-            // Commit transaction
-            $connection->commit();
-            return $next_time_str;
+            return $next_time;
             
         } catch (Exception $e) {
             // Rollback transaction on error
@@ -123,7 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Find next available time
-                $appointment_datetime = findNextAvailableTime($connection);
+                $next_time = findNextAvailableTime($connection);
+                $appointment_datetime = $next_time->format('Y-m-d H:i:s');
                 
                 // Insert appointment
                 $stmt = $connection->prepare("INSERT INTO appointments (patient_id, appointment_type, appointment_datetime) VALUES (?, ?, ?)");
