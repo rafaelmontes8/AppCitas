@@ -56,15 +56,20 @@ Sistema de gestión de citas online para una clínica de psicología, desarrolla
 
 ## Instalación
 
-1. Clonar el repositorio:
+1.Instalar Docker (Puede variar segun OS, en windows necesita tambien WSL).
+
+2. Clonar el repositorio:
 ```bash
 git clone https://github.com/rafaelmontes8/AppCitas.git
 cd AppCitas
 ```
+Alternativa:
+```bash
+cd AppCitas-main
+```
 
-2.Instalar Docker (Puede variar segun OS, en windows necesita tambien WSL).
 
-3. Iniciar los contenedores Docker:
+3. Iniciar los contenedores Docker (en el terminal, dentro de la carpeta raiz del proyecto):
 ```bash
 docker-compose up --build -d
 ```
