@@ -1,4 +1,24 @@
-# Sistema de Citas Online - Clínica de Psicología
+# Ejercicio 1 - Script de Decodificación (decodificar.py)
+
+El proyecto incluye un script de Python (`decodificar.py`) que se encarga de decodificar puntuaciones almacenadas en un archivo CSV. Este script:
+
+1. Lee un archivo `puntuaciones.csv` que contiene:
+   - Nombre de usuario
+   - Sistema de codificacion
+   - Puntuacion codificada
+
+2. Utiliza la función `decode_score` para convertir las cadenas codificadas en números enteros, usando un sistema de numeración personalizado.
+
+3. Muestra los resultados por la consola: `usuario,puntuación_decodificada`
+
+Para ejecutar el script:
+```bash
+py decodificar.py
+```
+
+El script espera que el archivo `puntuaciones.csv` esté en el mismo directorio y tenga el formato correcto. 
+
+# Ejercicio 2 - Sistema de Citas Online - Clínica de Psicología
 
 Sistema de gestión de citas online para una clínica de psicología, desarrollado en PHP sin frameworks.
 
@@ -42,7 +62,9 @@ git clone https://github.com/rafaelmontes8/AppCitas.git
 cd AppCitas
 ```
 
-2. Iniciar los contenedores Docker:
+2.Instalar Docker (Puede variar segun OS)
+
+3. Iniciar los contenedores Docker:
 ```bash
 docker-compose up --build -d
 ```
@@ -122,4 +144,4 @@ Si hay problemas de conexión:
 
 ## Licencia
 
-Este proyecto está protegido por una licencia de uso restrictivo. Se prohíbe expresamente la copia, distribución o modificación del código sin autorización expresa. Para más detalles, consulte el archivo [LICENSE](LICENSE). 
+Este proyecto está protegido por una licencia de uso restrictivo. Se prohíbe expresamente la copia, distribución o modificación del código sin autorización expresa. Para más detalles, consulte el archivo [LICENSE](LICENSE).
