@@ -64,7 +64,6 @@ cd AppCitas
 
 2.Instalar Docker (Puede variar segun OS, en windows necesita tambien WSL).
 
-
 3. Iniciar los contenedores Docker:
 ```bash
 docker-compose up --build -d
