@@ -1,8 +1,24 @@
 <?php
+// Start session at the beginning of the file
+session_start();
+
 $connection = new mysqli("db", "root", "", "miapp");
 
 if ($connection->connect_error) {
     die("Connection failed: " . $connection->connect_error);
+}
+
+// Generate CSRF token if it doesn't exist
+if (!isset($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(16));
+}
+
+// Get success message from session if it exists
+$message = $_SESSION['success_message'] ?? null;
+
+// Clear the message from session after displaying it
+if (isset($_SESSION['success_message'])) {
+    unset($_SESSION['success_message']);
 }
 
 // Function to validate DNI
@@ -78,97 +94,90 @@ function findNextAvailableTime($connection) {
 
 // Process form if submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'] ?? '';
-    $dni = $_POST['dni'] ?? '';
-    $phone = $_POST['phone'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $appointment_type = $_POST['appointment_type'] ?? '';
-    
-    $errors = [];
-    
-    if (empty($name)) $errors[] = "Name is required";
-    if (!validateDNI($dni)) $errors[] = "Invalid DNI";
-    if (!validatePhone($phone)) $errors[] = "Invalid phone number";
-    if (!validateEmail($email)) $errors[] = "Invalid email";
-    if (empty($appointment_type)) $errors[] = "Appointment type is required";
-    
-    if (empty($errors)) {
-        $max_retries = 3;
-        $retry_count = 0;
+    // Validate CSRF token
+    if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['csrf'] ?? '')) {
+        $errors[] = 'Token inválido';
+    } else {
+        $name = $_POST['name'] ?? '';
+        $dni = $_POST['dni'] ?? '';
+        $phone = $_POST['phone'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $appointment_type = $_POST['appointment_type'] ?? '';
         
-        while ($retry_count < $max_retries) {
-            try {
-                // Start transaction for the entire appointment creation process
-                $connection->begin_transaction();
-                
-                // Check if patient exists with a lock
-                $stmt = $connection->prepare("SELECT id FROM patients WHERE dni = ? FOR UPDATE");
-                $stmt->bind_param("s", $dni);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                
-                if ($result->num_rows === 0) {
-                    // Insert new patient
-                    $stmt = $connection->prepare("INSERT INTO patients (name, dni, phone, email) VALUES (?, ?, ?, ?)");
-                    $stmt->bind_param("ssss", $name, $dni, $phone, $email);
+        $errors = [];
+        
+        if (empty($name)) $errors[] = "Name is required";
+        if (!validateDNI($dni)) $errors[] = "Invalid DNI";
+        if (!validatePhone($phone)) $errors[] = "Invalid phone number";
+        if (!validateEmail($email)) $errors[] = "Invalid email";
+        if (empty($appointment_type)) $errors[] = "Appointment type is required";
+        
+        if (empty($errors)) {
+            $max_retries = 3;
+            $retry_count = 0;
+            
+            while ($retry_count < $max_retries) {
+                try {
+                    // Start transaction for the entire appointment creation process
+                    $connection->begin_transaction();
+                    
+                    // Check if patient exists with a lock
+                    $stmt = $connection->prepare("SELECT id FROM patients WHERE dni = ? FOR UPDATE");
+                    $stmt->bind_param("s", $dni);
                     $stmt->execute();
-                    $patient_id = $connection->insert_id;
-                } else {
-                    $row = $result->fetch_assoc();
-                    $patient_id = $row['id'];
-                }
-                
-                // Find next available time
-                $next_time = findNextAvailableTime($connection);
-                $appointment_datetime = $next_time->format('Y-m-d H:i:s');
-                
-                // Insert appointment
-                $stmt = $connection->prepare("INSERT INTO appointments (patient_id, appointment_type, appointment_datetime) VALUES (?, ?, ?)");
-                $stmt->bind_param("iss", $patient_id, $appointment_type, $appointment_datetime);
-                
-                if ($stmt->execute()) {
-                    $connection->commit();
-                    // Store success message in session
-                    session_start();
-                    $_SESSION['success_message'] = "Appointment scheduled successfully for " . date('d/m/Y H:i', strtotime($appointment_datetime));
-                    // Redirect to the same page
-                    header('Location: ' . $_SERVER['PHP_SELF']);
-                    exit;
-                } else {
-                    throw new Exception("Error scheduling appointment");
-                }
-            } catch (Exception $e) {
-                $connection->rollback();
-                
-                // Check if it's a deadlock
-                if (strpos($e->getMessage(), 'Deadlock') !== false) {
-                    $retry_count++;
-                    if ($retry_count < $max_retries) {
-                        // Wait a random time before retrying
-                        usleep(rand(100000, 500000)); // 100-500ms
-                        continue;
+                    $result = $stmt->get_result();
+                    
+                    if ($result->num_rows === 0) {
+                        // Insert new patient
+                        $stmt = $connection->prepare("INSERT INTO patients (name, dni, phone, email) VALUES (?, ?, ?, ?)");
+                        $stmt->bind_param("ssss", $name, $dni, $phone, $email);
+                        $stmt->execute();
+                        $patient_id = $connection->insert_id;
+                    } else {
+                        $row = $result->fetch_assoc();
+                        $patient_id = $row['id'];
                     }
+                    
+                    // Find next available time
+                    $next_time = findNextAvailableTime($connection);
+                    $appointment_datetime = $next_time->format('Y-m-d H:i:s');
+                    
+                    // Insert appointment
+                    $stmt = $connection->prepare("INSERT INTO appointments (patient_id, appointment_type, appointment_datetime) VALUES (?, ?, ?)");
+                    $stmt->bind_param("iss", $patient_id, $appointment_type, $appointment_datetime);
+                    
+                    if ($stmt->execute()) {
+                        $connection->commit();
+                        // Store success message in session
+                        $_SESSION['success_message'] = "Appointment scheduled successfully for " . date('d/m/Y H:i', strtotime($appointment_datetime));
+                        // Redirect to the same page
+                        header('Location: ' . $_SERVER['PHP_SELF']);
+                        exit;
+                    } else {
+                        throw new Exception("Error scheduling appointment");
+                    }
+                } catch (Exception $e) {
+                    $connection->rollback();
+                    
+                    // Check if it's a deadlock
+                    if (strpos($e->getMessage(), 'Deadlock') !== false) {
+                        $retry_count++;
+                        if ($retry_count < $max_retries) {
+                            // Wait a random time before retrying
+                            usleep(rand(100000, 500000)); // 100-500ms
+                            continue;
+                        }
+                    }
+                    $errors[] = $e->getMessage();
+                    break; // Exit retry loop on non-deadlock error
                 }
-                $errors[] = $e->getMessage();
-                break; // Exit retry loop on non-deadlock error
+            }
+            
+            if ($retry_count >= $max_retries) {
+                $errors[] = "No se pudo procesar la solicitud después de varios intentos. Por favor, intente nuevamente.";
             }
         }
-        
-        if ($retry_count >= $max_retries) {
-            $errors[] = "No se pudo procesar la solicitud después de varios intentos. Por favor, intente nuevamente.";
-        }
     }
-}
-
-// Start session at the beginning of the file
-session_start();
-
-// Get success message from session if it exists
-$message = $_SESSION['success_message'] ?? null;
-
-// Clear the message from session after displaying it
-if (isset($_SESSION['success_message'])) {
-    unset($_SESSION['success_message']);
 }
 ?>
 <!DOCTYPE html>
@@ -283,6 +292,23 @@ if (isset($_SESSION['success_message'])) {
             gap: 1rem;
         }
 
+        .view-appointments-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .view-appointments-link:hover {
+            background-color: var(--primary-color);
+        }
+
         @media (max-width: 768px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -317,6 +343,8 @@ if (isset($_SESSION['success_message'])) {
         <?php endif; ?>
         
         <form id="appointmentForm" method="POST">
+            <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf']); ?>">
+            
             <div class="form-row">
                 <div class="form-group">
                     <label for="name">Nombre:</label>
@@ -352,6 +380,8 @@ if (isset($_SESSION['success_message'])) {
             
             <button type="submit">Solicitar Cita</button>
         </form>
+        
+        <a href='check_appointments.php' class="view-appointments-link">Ver todas las citas programadas</a>
     </div>
 
     <script>
