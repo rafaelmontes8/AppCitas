@@ -6,6 +6,7 @@ El proyecto incluye un script de Python (`decodificar.py`) que se encarga de dec
 
 - Python 3
 
+## Características
 1. Lee un archivo `puntuaciones.csv` que contiene:
    - Nombre de usuario
    - Sistema de codificacion
