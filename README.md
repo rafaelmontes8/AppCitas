@@ -2,6 +2,10 @@
 
 El proyecto incluye un script de Python (`decodificar.py`) que se encarga de decodificar puntuaciones almacenadas en un archivo CSV. Este script:
 
+## Requisitos
+
+- Python 3
+
 1. Lee un archivo `puntuaciones.csv` que contiene:
    - Nombre de usuario
    - Sistema de codificacion
@@ -41,18 +45,41 @@ Sistema de gestión de citas online para una clínica de psicología, desarrolla
 ## Estructura del Proyecto
 
 ```
-.
-├── docker-compose.yml
-├── mysql/
-│   └── init.sql
+AppCitas/
+├── ejericio1/
+│   ├── decodificar.py
+│   └──puntuaciones.csv
+├── public_html/
+│   ├── index.php
+│   ├── check_appointments.php
+│   ├── check_patient.php
+│   └── simulate_concurrent_requests.php
 ├── php/
 │   └── Dockerfile
-└── public_html/
-    ├── index.php
-    ├── check_patient.php
-    ├── simulate_concurrent_requests.php
-    └── check_appointments.php
+├── sql/
+│   ├── conf.d/
+│   │   └──custom.cnf
+│   └── init.sql
+├── docker-compose.yml
+├── README.md
+└── LICENSE
 ```
+
+## Descripción de Archivos
+
+### public_html/
+- `index.php`: Contiene el formulario principal para solicitar citas, maneja la validación de datos y la programación de citas.
+- `check_appointments.php`: Muestra las citas programadas y permite su consulta.
+- `check_patient.php`: Verifica la existencia de un paciente mediante su DNI.
+- `simulate_concurrent_requests.php`: Herramienta para simular múltiples solicitudes de citas simultáneas.
+
+### docker/
+- `Dockerfile`: Define la configuración del contenedor PHP, incluyendo las dependencias necesarias.
+- `docker-compose.yml`: Configura los servicios de la aplicación (PHP, MySQL, phpMyAdmin).
+
+### sql/
+- `init.sql`: Script SQL para inicializar la base de datos y crear las tablas necesarias.
+
 
 ## Instalación
 
