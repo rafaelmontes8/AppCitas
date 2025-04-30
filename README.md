@@ -163,12 +163,6 @@ Para ver todas las citas programadas:
 
 ## Solución de Problemas
 
-### Deadlocks
-Si encuentras errores de deadlock:
-1. El sistema reintentará automáticamente hasta 3 veces
-2. Si persiste el error, intenta nuevamente más tarde
-3. Los deadlocks son normales en entornos de alta concurrencia
-
 ### Conexión a la Base de Datos
 Si hay problemas de conexión:
 1. Verifica que los contenedores Docker estén corriendo
