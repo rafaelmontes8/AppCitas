@@ -128,8 +128,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($stmt->execute()) {
                     $connection->commit();
-                    $message = "Cita asignada correctamente para el " . date('d/m/Y H:i', strtotime($appointment_datetime));
-                    break; // Exit retry loop on success
+                    // Store success message in session
+                    session_start();
+                    $_SESSION['success_message'] = "Appointment scheduled successfully for " . date('d/m/Y H:i', strtotime($appointment_datetime));
+                    // Redirect to the same page
+                    header('Location: ' . $_SERVER['PHP_SELF']);
+                    exit;
                 } else {
                     throw new Exception("Error scheduling appointment");
                 }
@@ -155,6 +159,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+// Start session at the beginning of the file
+session_start();
+
+// Get success message from session if it exists
+$message = $_SESSION['success_message'] ?? null;
+
+// Clear the message from session after displaying it
+if (isset($_SESSION['success_message'])) {
+    unset($_SESSION['success_message']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -163,92 +178,181 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Citas - Clínica de Psicología</title>
     <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6c8fc7;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: var(--background-color);
+            color: var(--text-color);
             padding: 20px;
         }
-        .form-group {
-            margin-bottom: 15px;
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
         }
+
         input, select {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
         }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
         button {
-            background-color: #4CAF50;
+            background-color: var(--primary-color);
             color: white;
-            padding: 10px 15px;
+            padding: 1rem 2rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.3s ease;
         }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
         .error {
-            color: red;
-            margin-bottom: 10px;
+            color: var(--error-color);
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
         }
+
         .success {
-            color: green;
-            margin-bottom: 10px;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Sistema de Citas - Clínica de Psicología</h1>
-    
-    <?php if (!empty($errors)): ?>
-        <div class="error">
-            <?php foreach ($errors as $error): ?>
-                <p><?php echo htmlspecialchars($error); ?></p>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-    
-    <?php if (isset($message)): ?>
-        <div class="success">
-            <p><?php echo htmlspecialchars($message); ?></p>
-        </div>
-    <?php endif; ?>
-    
-    <form id="appointmentForm" method="POST">
-        <div class="form-group">
-            <label for="name">Nombre:</label>
-            <input type="text" id="name" name="name" required>
-        </div>
+    <div class="container">
+        <h1>Sistema de Citas - Clínica de Psicología</h1>
         
-        <div class="form-group">
-            <label for="dni">DNI:</label>
-            <input type="text" id="dni" name="dni" required pattern="[0-9]{8}[A-Z]">
-        </div>
+        <?php if (!empty($errors)): ?>
+            <div class="error">
+                <?php foreach ($errors as $error): ?>
+                    <p><?php echo htmlspecialchars($error); ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
         
-        <div class="form-group">
-            <label for="phone">Telefono:</label>
-            <input type="tel" id="phone" name="phone" required pattern="[0-9]{9}">
-        </div>
+        <?php if (isset($message)): ?>
+            <div class="success">
+                <p><?php echo htmlspecialchars($message); ?></p>
+            </div>
+        <?php endif; ?>
         
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="appointment_type">Tipo de cita:</label>
-            <select id="appointment_type" name="appointment_type" required>
-                <option value="">Selecciona un tipo</option>
-                <option value="FIRST_VISIT">Primera consulta</option>
-                <option value="FOLLOW_UP" disabled>Revision</option>
-            </select>
-        </div>
-        
-        <button type="submit">Solicitar Cita</button>
-    </form>
+        <form id="appointmentForm" method="POST">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Nombre:</label>
+                    <input type="text" id="name" name="name" required placeholder="Ingrese su nombre completo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="dni">DNI:</label>
+                    <input type="text" id="dni" name="dni" required pattern="[0-9]{8}[A-Z]" placeholder="12345678A">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phone">Teléfono:</label>
+                    <input type="tel" id="phone" name="phone" required pattern="[0-9]{9}" placeholder="123456789">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required placeholder="ejemplo@correo.com">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="appointment_type">Tipo de cita:</label>
+                <select id="appointment_type" name="appointment_type" required>
+                    <option value="">Selecciona un tipo</option>
+                    <option value="FIRST_VISIT">Primera consulta</option>
+                    <option value="FOLLOW_UP" disabled>Revisión</option>
+                </select>
+            </div>
+            
+            <button type="submit">Solicitar Cita</button>
+        </form>
+    </div>
 
     <script>
         document.getElementById('dni').addEventListener('blur', function() {
