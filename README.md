@@ -28,7 +28,7 @@ Sistema de gestión de citas online para una clínica de psicología, desarrolla
 
 ## Características
 
-- Formulario de solicitud de citas con validación
+- Formulario de solicitud de citas con validación y CSRF
 - Verificación de DNI en tiempo real
 - Sistema de asignación automática de citas
 - Manejo de concurrencia y deadlocks
